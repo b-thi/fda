@@ -189,6 +189,138 @@ lines(betafd-2*betastderrfd, lty=2, lwd=2, col = "red")
 # There is no significant effect of the temperature on the annual precipitations in other time.
 
 
-################# Redoing with some other data set (Hockey Data)
+################# Redoing with some other data set (Height Data)
+
+### Getting the response (male)
+height_mean_m <- data.frame(growth$hgtm) %>% 
+  summarise_all(funs(mean))
+
+height_mean_m <- t(height_mean_m)[,1] + rnorm(39, mean = 5, sd = 5)
+
+
+### Getting the response (female)
+height_mean_f <- data.frame(growth$hgtf) %>% 
+  summarise_all(funs(var))
+
+height_mean_f <- t(height_mean_f)[,1]
+
+
+### Creating fourier basis for males/females
+height_basis  = create.bspline.basis(c(0,18), 4)
+
+### Smoothing the curve
+eval_years <- growth$age
+height_smooth_m <- smooth.basis(eval_years, growth$hgtm, height_basis)
+height_smooth_f <- smooth.basis(eval_years, growth$hgtf, height_basis)
+
+### Pulling out the functional objects
+height_fd_m = height_smooth_m$fd
+height_fd_f = height_smooth_f$fd
+
+### Now, need to create model matrix
+## First is the vector of 1s
+## Second is the smoothed matrix functional data object
+
+# Initializing
+h_m_list <- vector("list", 2)
+h_f_list <- vector("list", 2)
+
+# Intercepts
+intercept_vec_m <- rep(1, ncol(growth$hgtm))
+intercept_vec_f <- rep(1, ncol(growth$hgtf))
+
+# Adding to list the functional objects
+h_m_list[[1]] <- intercept_vec_m
+h_f_list[[1]] <- intercept_vec_f
+h_m_list[[2]] <- height_fd_m
+h_f_list[[2]] <- height_fd_f
+
+### Need to create functional objects out of intercept and for beta
+# create a constant basis for the intercept
+conbasis   = create.constant.basis(c(0,18))
+
+# Define the small number of basis functions for beta(t)
+# We do not use roughness penalty here
+betabasis = create.bspline.basis(c(0,18), 4)
+betalist1  = vector("list",2)
+betalist1[[1]] = conbasis
+betalist1[[2]] = betabasis
+
+betabasis2 = create.bspline.basis(c(0,18), 4)
+betalist2  = vector("list",2)
+betalist2[[1]] = conbasis
+betalist2[[2]] = betabasis2
+
+### Fitting the linear model
+## First argument is the annual precipitation (reponse)
+## Second argument is the functional data information
+## Third argument is the betas
+
+# For females
+fRegress_f <-  fRegress(height_mean_f, h_f_list, betalist1)
+beta_est_f <- fRegressList1$betaestlist
+
+### Plotting the betas
+# obtain beta(t)
+beta_fd_f <- beta_est_f[[2]]$fd
+plot(beta_fd_f, xlab="Year", ylab="Beta for Time")
+
+# For males
+fRegress_m = fRegress(height_mean_m, h_m_list, betalist2)
+beta_est_m  = fRegress_m$betaestlist
+
+### Plotting the betas
+# obtain beta(t)
+beta_fd_m <-  beta_est_m[[2]]$fd
+plot(beta_fd_m, xlab="Year", ylab="Beta for Time")
+
+
+##### Doing penalized estimation regresion
+### Essentially this means that we do it for the 
+### betas when we do the basis functions for the beta
+### Apparently, because this is periodic, the best
+### choice here is likely the harmonic differential
+### operator as opposed to some other operator
+
+# Penalized Estimation
+
+# Using the harmonic acceleration differential operator 
+# to define roughness penalty on beta(t)
+Lcoef = c(0,(2*pi/365)^2,0)
+harmaccelLfd = vec2Lfd(Lcoef, c(0,18))
+
+# We use 35 Fourier basis functions to represent beta(t)
+##### Q - Why did we pick 35? instead of the 11 from before
+betabasis35 = create.bspline.basis(c(0, 18), 4)
+
+# Choosing Smoothing Parameters using cross-validation
+loglam = seq(5,15,0.5)
+nlam   = length(loglam)
+SSE.CV = rep(NA,nlam)
+for (ilam in 1:nlam) {
+  print(paste("log lambda =", loglam[ilam]))
+  lambda     = 10^(loglam[ilam])
+  betalisti  = betalist1
+  betalisti[[2]] = fdPar(betabasis35, harmaccelLfd, lambda)
+  fRegi          = fRegress.CV(annualprec, templist, betalisti)
+  SSE.CV[ilam]   = fRegi$SSE.CV
+}
+
+### Looking at plot of the cross-validated smoothness penalties
+par(mfrow=c(1,1),mar = c(8, 8, 4, 2))
+plot(loglam, SSE.CV, type="b", lwd=2,
+     xlab="log smoothing parameter lambda",
+     ylab="Cross-validation score", cex.lab=2,cex.axis=2)
+
+# Choose lambda which minimize SSE.CV
+lambda      = 10^12.5
+betafdPar.  = fdPar(betabasis35, harmaccelLfd, lambda)
+
+betalist2      = betalist1
+betalist2[[2]] = betafdPar.
+
+# do functional linear model
+annPrecTemp    = fRegress(annualprec, templist, betalist2)
+
 
 

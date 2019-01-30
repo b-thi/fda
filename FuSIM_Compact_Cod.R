@@ -41,12 +41,12 @@ fdagg(beta_fd,ylab="index function", xlab='time')
 ### Getting fitted values
 score_fit = (res_c$score_fit)
 
-### Getting predictions
+### Getting predictions through the link function
 pred_y = localpoly.reg(score_fit, y, degree.pol = 1, kernel.type = "gaussian",bandwidth = "CV",deriv=0,points=score_fit)
 
 ### plot the fitted integral vs the response 
 plot(x=score_fit, y=y)
-lines(pred_y$predicted[order(score_fit)],x=score_fit[order(score_fit)],col=4)
+lines(pred_y$predicted[order(score_fit)], x=score_fit[order(score_fit)], col=4)
 
 ### compute MSE 
 fity = pred_y$predicted
