@@ -15,13 +15,13 @@ bike
 
 ### Creating basis
 timepts = bike$timepts
-norder=4 ## cubic B-spline
-nbasis=norder+length(timepts)-2; 
-spline_basis=create.bspline.basis(rangeval=c(1,24),nbasis,norder,timepts)
+norder = 4 ## cubic B-spline
+nbasis = norder + length(timepts) - 2; 
+spline_basis = create.bspline.basis(rangeval=c(1,24),nbasis,norder,timepts)
 
 ### Turning data into functional data
 wull = bike$temp
-xfds=  Data2fd(y=wull%>%t, argvals=bike$timepts)
+xfds = Data2fd(y = wull%>%t, argvals = bike$timepts)
 
 ### Pulling out the scalar response (total bike rentals over 102 weeks)
 y = bike$y
@@ -42,10 +42,11 @@ fdagg(beta_fd,ylab="index function", xlab='time')
 score_fit = (res_c$score_fit)
 
 ### Getting predictions through the link function
-pred_y = localpoly.reg(score_fit, y, degree.pol = 1, kernel.type = "gaussian",bandwidth = "CV",deriv=0,points=score_fit)
+pred_y = localpoly.reg(score_fit, y, degree.pol = 1, kernel.type = "gaussian",
+                       bandwidth = "CV", deriv=0, points=score_fit)
 
 ### plot the fitted integral vs the response 
-plot(x=score_fit, y=y)
+plot(x = score_fit, y = y)
 lines(pred_y$predicted[order(score_fit)], x=score_fit[order(score_fit)], col=4)
 
 ### compute MSE 
