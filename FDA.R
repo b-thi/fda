@@ -323,4 +323,4 @@ betalist2[[2]] = betafdPar.
 annPrecTemp    = fRegress(annualprec, templist, betalist2)
 
 
-
+xd
