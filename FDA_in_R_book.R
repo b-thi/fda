@@ -32,6 +32,6 @@ summary(heightbasis)
 # we get the coefficients by calculating them from the
 # actual data points
 tvec = c(1:18)
-eval.basis(tvec, heightbasis)
+basis_matrix <- eval.basis(tvec, heightbasis)
 
 
