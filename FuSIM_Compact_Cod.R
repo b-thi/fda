@@ -22,6 +22,7 @@ spline_basis = create.bspline.basis(rangeval=c(1,24),nbasis,norder,timepts)
 ### Turning data into functional data
 wull = bike$temp
 xfds = Data2fd(y = wull%>%t, argvals = bike$timepts)
+library(dplyr)
 
 ### Pulling out the scalar response (total bike rentals over 102 weeks)
 y = bike$y
@@ -30,7 +31,7 @@ y = y[train_sample]
 xfd = xfds[train_sample]
 
 ### Running the regression
-res_c = cFuSIM_index(y, xfd, spline_basis)
+res_c = cFuSIM_index(y, xfds, spline_basis)
 
 ### Pulling out the beta estimate (index function)
 beta_fd = fd(res_c$coefBeta, res_c$basisBeta)

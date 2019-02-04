@@ -1,7 +1,7 @@
 ##### SCAD Function #####
 
 ### Defining Function
-p_scad <- function(lambda, a, beta){
+p_scad <- function(beta, lambda, a){
   
   vals = c()
   
@@ -21,14 +21,50 @@ p_scad <- function(lambda, a, beta){
     
   }
 
-  return(vals)
+  return(as.numeric(vals))
   
 }
 
 ### Defining beta values
-beta = seq(0.001, 10, 0.01)
+beta_func <- function(nums){
+  vals <- nums^2
+  return(vals)
+}
 
-### Runnign function
-p_scad_val <- p_scad(500, 3.7, beta)
+nums = seq(0, 10, 0.001)
 
-plot(beta, p_scad_val)
+### Running function
+p_scad_val <- p_scad(beta_func(nums), 0.1, 3.7)
+
+plot(beta_func(nums), p_scad_val)
+
+
+### Integrating
+integral_vals = c()
+for (i in 1:100) {
+ integral_vals[i] <- integrate(p_scad, a = 3.7, lambda = 7, 0, i)[[1]]/i
+}
+
+plot(1:100, integral_vals, type = "l")
+
+integral_vals = c()
+for (i in 1:100) {
+  integral_vals[i] <- integrate(p_scad, a = 3.7, lambda = 3, 0, i)[[1]]/i
+}
+
+lines(1:100, integral_vals, col = "red")
+
+integral_vals = c()
+for (i in 1:100) {
+  integral_vals[i] <- integrate(p_scad, a = 3.7, lambda = 0.5, 0, i)[[1]]/i
+}
+
+lines(1:100, integral_vals, col = "blue")
+
+integral_vals = c()
+for (i in 1:100) {
+  integral_vals[i] <- integrate(p_scad, a = 3.7, lambda = 0, 0, i)[[1]]/i
+}
+
+lines(1:100, integral_vals, col = "green")
+
