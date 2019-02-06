@@ -33,6 +33,7 @@ xfd = xfds[train_sample]
 ### Running the regression
 res_c = cFuSIM_index(y, xfds, spline_basis)
 
+
 ### Pulling out the beta estimate (index function)
 beta_fd = fd(res_c$coefBeta, res_c$basisBeta)
 
@@ -45,6 +46,7 @@ score_fit = (res_c$score_fit)
 ### Getting predictions through the link function
 pred_y = localpoly.reg(score_fit, y, degree.pol = 1, kernel.type = "gaussian",
                        bandwidth = "CV", deriv=0, points=score_fit)
+
 
 ### plot the fitted integral vs the response 
 plot(x = score_fit, y = y)

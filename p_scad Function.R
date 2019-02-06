@@ -42,7 +42,7 @@ plot(beta_func(nums), p_scad_val)
 ### Integrating
 integral_vals = c()
 for (i in 1:100) {
- integral_vals[i] <- integrate(p_scad, a = 3.7, lambda = 50, 0, i)[[1]]/i
+ integral_vals[i] <- integrate(p_scad, a = 3.7, lambda = 70, 0, i)[[1]]/i
 }
 
 plot(1:100, integral_vals, type = "l")
