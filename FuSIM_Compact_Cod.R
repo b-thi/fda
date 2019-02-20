@@ -60,4 +60,3 @@ mse  = mean((y - fity)^2)
 p = sum(res_c$coefBeta!=0)
 bic = length(y)*log(mse)+log(length(y))*(p+1)
 
-
