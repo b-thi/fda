@@ -90,7 +90,7 @@ plot(melFD2_2)
 
 # creating bspline basis
 bsplinebasis_q2 <- create.bspline.basis(rangeval = c(1936, 1972),
-                                     norder = 4)
+                                     norder = 4, nbasis = 15)
 
 # now, using this basis, we evaluate it at the appropriate
 # values of t
@@ -115,7 +115,7 @@ plotfit.fd(melanoma$incidence, melanoma$year, melFD_smooth,
 
 
 # Choosing Smoothing Parameters using cross-validation
-loglam = seq(0, 0.1, 0.00001)
+loglam = seq(0, 10, 0.01)
 nlam = length(loglam)
 dfsave = rep(NA,nlam)
 gcvsave = rep(NA,nlam)
@@ -124,7 +124,7 @@ gcvsave = rep(NA,nlam)
 for (ilam in 1:nlam) {
   cat(paste("log10 lambda =",loglam[ilam],"\n"))
   lambda = loglam[ilam]
-  fdParobj = fdPar(bsplinebasis_q2, 3, lambda)
+  fdParobj = fdPar(bsplinebasis_q2, 2, lambda)
   smoothlist = smooth.basis(time_vec, melanoma$incidence,
                             fdParobj)
   dfsave[ilam] = smoothlist$df
@@ -132,3 +132,10 @@ for (ilam in 1:nlam) {
 }
 
 plot(loglam, gcvsave)
+
+
+test = smooth.basisPar(time_vec, melanoma$incidence, bsplinebasis_q2, lambda = loglam[which.min(gcvsave)])
+
+plotfit.fd(melanoma$incidence, melanoma$year, test$fd, 
+           lty=1, lwd=2, col=1)
+
