@@ -22,71 +22,108 @@ str(melanoma)
 ## estimate the function. 
 ###################
 
-# plotting
-ggplot(data = melanoma, aes(x = year, y = incidence)) + geom_point() + theme_bw()
-## Looks like a bspline basis might be reasonable here
+# plotting data
+melanoma %>% 
+  ggplot( aes(x = year, y = incidence)) + 
+  geom_point() + 
+  theme_bw() +
+  ggtitle("Melanoma Data") +
+  xlab("Year") +
+  ylab("Incidence Rate") +
+  theme(plot.title = element_text(hjust = 0.5))
 
-# creating bspline basis
-bsplinebasis <- create.bspline.basis(rangeval = c(1936, 1972),
-                                 norder = 2)
+### a
 
-# now, using this basis, we evaluate it at the appropriate
-# values of t
+# Choosing Smoothing Parameters using cross-validation
+basis_val = seq(4, 35, 1)
+len_basis = length(basis_val)
+gcv_val_basis = c()
+
+# Creating time vector
 time_vec <- seq(1936, 1972, 1)
 
-# evaluating basis
-evalsplinebasis <- eval.basis(time_vec, bsplinebasis)
+# Running loop
+for (i in 1:len_basis) {
+  
+  # Particular value of lambda
+  basis_choice = basis_val[i]
+  
+  # Picking nbasis
+  bsplinebasis_test <- create.bspline.basis(rangeval = c(1936, 1972),
+                                        norder = 4,
+                                        nbasis = basis_choice)
+  
+  
+  # Creating FD Object
+  smooth_fd = smooth.basis(time_vec, melanoma$incidence,
+                            bsplinebasis_test)
+  
+  # Pulling out error
+  gcv_val_basis[i] = sum(smooth_fd$gcv)
+  
+}
 
-# now let's figure out the coefficients
-chat <- (solve((t(evalsplinebasis))%*%evalsplinebasis))%*%(t(evalsplinebasis))%*%melanoma$incidence
+# Plotting results
+data.frame(basis = basis_val, gcv = gcv_val_basis) %>% 
+  ggplot(aes(x = basis, y = gcv)) + 
+  geom_line() +
+  theme_bw() +
+  xlab("Number of Basis") +
+  ylab("Cross Validationg Error") +
+  ggtitle("Finding Appropriate Number of Basis") +
+  geom_point(aes(x = basis[which.min(gcv)], 
+                 y = gcv[which.min(gcv)]), 
+             color = "red",
+             size = 3) +
+  theme(plot.title = element_text(hjust = 0.5))
 
-# now, we can create the functional object
-melFD = fd(chat, bsplinebasis,
-            list("Year","", "Incidence"))
 
-# plotting
-plotfit.fd(melanoma$incidence, melanoma$year, melFD, 
-           lty=1, lwd=2, col=1)
+### b
 
-# Looking at the above plot, it actually looks like
-# there could be reason to use a cubic spline basis,
-# with a few basis functions, let's try this instead
+# Correct number of basis
+bsplinebasis_final <- create.bspline.basis(rangeval = c(1936, 1972),
+                                      norder = 4,
+                                      nbasis = basis_val[which.min(gcv_val_basis)])
 
-# creating bspline basis (order 4)
-bsplinebasis2 <- create.bspline.basis(rangeval = c(1936, 1972),
-                                     norder = 4,
-                                     nbasis = 15)
-
-# evaluating basis
-evalsplinebasis2 <- eval.basis(time_vec, bsplinebasis2)
+# evaluating basis to get matrix
+evalsplinebasis_final <- eval.basis(time_vec, bsplinebasis_final)
 
 # now let's figure out the coefficients using regression
-chat2 <- (solve((t(evalsplinebasis2))%*%evalsplinebasis2))%*%(t(evalsplinebasis2))%*%melanoma$incidence
+chat <- (solve((t(evalsplinebasis_final))%*%evalsplinebasis_final))%*%(t(evalsplinebasis_final))%*%melanoma$incidence
 
 
 # now, we can create the functional object again
-melFD2 = fd(chat2, bsplinebasis2,
+melFD = fd(chat, bsplinebasis_final,
            list("Year","", "Incidence"))
 
-# plotting again
-plotfit.fd(melanoma$incidence, melanoma$year, melFD2, 
+
+# plotting functional observation with original data
+plotfit.fd(melanoma$incidence, melanoma$year, melFD, 
            lty=1, lwd=2, col=1)
 
 # so, this might look better, but worried about overfitting
 # hm, there seems to be an up and down effect, it could potentially,
 # even make sense to use a fourier basis
 
+### c
+
 # Now, let's do the derivative version
 
 # deriv 1
-melFD2_1 <- deriv.fd(melFD2)
-plot(melFD2_1)
+melFD_1 <- deriv.fd(melFD)
+plot(melFD_1, 
+     xlab = "First Derivative", 
+     main = "Plotting the First Derivative")
 
 # deriv 2
-melFD2_2 <- deriv.fd(melFD2_1)
-plot(melFD2_2)
+melFD_2 <- deriv.fd(melFD_1)
+plot(melFD_2, 
+     ylab = "Second Derivative",
+     main = "Plotting the Second Derivative")
 
 ################ Question 2
+
+### a
 
 # creating bspline basis
 bsplinebasis_q2 <- create.bspline.basis(rangeval = c(1936, 1972),
@@ -96,46 +133,62 @@ bsplinebasis_q2 <- create.bspline.basis(rangeval = c(1936, 1972),
 # values of t
 time_vec <- seq(1936, 1972, 1)
 
-# Defining differential operator
-Lcoef = c(0,(2*pi/365)^2,0)
-harmaccelLfd = vec2Lfd(Lcoef, c(1936, 1972))
-
-# Creating variable with parameter
-melanoma_par <- fdPar(bsplinebasis_q2, 2, 1)
-
-# Smoothing and pulling out functional obs
-melFD_smooth <- smooth.basis(time_vec, melanoma$incidence,
-                        melanoma_par)$fd
-
-# Plotting
-plotfit.fd(melanoma$incidence, melanoma$year, melFD_smooth, 
-           lty=1, lwd=2, col=1)
-
-
-
-
 # Choosing Smoothing Parameters using cross-validation
-loglam = seq(0, 10, 0.01)
-nlam = length(loglam)
-dfsave = rep(NA,nlam)
-gcvsave = rep(NA,nlam)
+lambda_val = seq(0, 10, 0.01)
+len_lam = length(lambda_val)
+gcv_val = c()
 
 # Running loop
-for (ilam in 1:nlam) {
-  cat(paste("log10 lambda =",loglam[ilam],"\n"))
-  lambda = loglam[ilam]
+for (i in 1:len_lam) {
+  
+  # Particular value of lambda
+  lambda = lambda_val[i]
+  
+  # Setting up
   fdParobj = fdPar(bsplinebasis_q2, 2, lambda)
+  
+  # Creating FD Object
   smoothlist = smooth.basis(time_vec, melanoma$incidence,
                             fdParobj)
-  dfsave[ilam] = smoothlist$df
-  gcvsave[ilam] = sum(smoothlist$gcv)
+  
+  # Pulling out error
+  gcv_val[i] = sum(smoothlist$gcv)
+  
 }
 
-plot(loglam, gcvsave)
+# Plotting results
+data.frame(lambdas = lambda_val, gcv = gcv_val) %>% 
+  ggplot(aes(x = lambdas, y = gcv)) + 
+  geom_line() +
+  theme_bw() +
+  xlab("Lambda") +
+  ylab("Cross Validationg Error") +
+  ggtitle("Finding Appropriate Lambda") +
+  geom_point(aes(x = lambdas[which.min(gcv)], 
+                 y = gcv[which.min(gcv)]), 
+             color = "red",
+             size = 3) +
+  theme(plot.title = element_text(hjust = 0.5))
 
+### b
 
-test = smooth.basisPar(time_vec, melanoma$incidence, bsplinebasis_q2, lambda = loglam[which.min(gcvsave)])
+# Creating best FD Object
+melanoma_fd_rough = smooth.basisPar(time_vec, 
+                                    melanoma$incidence, 
+                                    bsplinebasis_q2, 
+                                    lambda = lambda_val[which.min(gcv_val)])
 
-plotfit.fd(melanoma$incidence, melanoma$year, test$fd, 
+# Plotting 
+plotfit.fd(melanoma$incidence, melanoma$year, melanoma_fd_rough$fd, 
            lty=1, lwd=2, col=1)
 
+
+### c
+
+# deriv 1
+melFD_rough_deriv <- deriv.fd(melanoma_fd_rough$fd)
+plot(melFD_rough_deriv)
+
+# deriv 2
+melFD_rough_deriv2 <- deriv.fd(melFD_rough_deriv)
+plot(melFD_rough_deriv2)
