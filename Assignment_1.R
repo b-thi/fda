@@ -69,7 +69,7 @@ data.frame(basis = basis_val, gcv = gcv_val_basis) %>%
   geom_line() +
   theme_bw() +
   xlab("Number of Basis") +
-  ylab("Cross Validationg Error") +
+  ylab("Cross Validation Error") +
   ggtitle("Finding Appropriate Number of Basis") +
   geom_point(aes(x = basis[which.min(gcv)], 
                  y = gcv[which.min(gcv)]), 
@@ -112,7 +112,7 @@ plotfit.fd(melanoma$incidence, melanoma$year, melFD,
 # deriv 1
 melFD_1 <- deriv.fd(melFD)
 plot(melFD_1, 
-     xlab = "First Derivative", 
+     ylab = "First Derivative", 
      main = "Plotting the First Derivative")
 
 # deriv 2
@@ -127,7 +127,7 @@ plot(melFD_2,
 
 # creating bspline basis
 bsplinebasis_q2 <- create.bspline.basis(rangeval = c(1936, 1972),
-                                     norder = 4, nbasis = 15)
+                                     norder = 4, nbasis = 12)
 
 # now, using this basis, we evaluate it at the appropriate
 # values of t
@@ -162,7 +162,7 @@ data.frame(lambdas = lambda_val, gcv = gcv_val) %>%
   geom_line() +
   theme_bw() +
   xlab("Lambda") +
-  ylab("Cross Validationg Error") +
+  ylab("Cross Validation Error") +
   ggtitle("Finding Appropriate Lambda") +
   geom_point(aes(x = lambdas[which.min(gcv)], 
                  y = gcv[which.min(gcv)]), 
@@ -187,8 +187,12 @@ plotfit.fd(melanoma$incidence, melanoma$year, melanoma_fd_rough$fd,
 
 # deriv 1
 melFD_rough_deriv <- deriv.fd(melanoma_fd_rough$fd)
-plot(melFD_rough_deriv)
+plot(melFD_rough_deriv, 
+     ylab = "First Derivative",
+     main = "Plotting the First Derivative")
 
 # deriv 2
 melFD_rough_deriv2 <- deriv.fd(melFD_rough_deriv)
-plot(melFD_rough_deriv2)
+plot(melFD_rough_deriv2, 
+     ylab = "Second Derivative",
+     main = "Plotting the Second Derivative")
