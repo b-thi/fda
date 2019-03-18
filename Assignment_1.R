@@ -91,11 +91,19 @@ evalsplinebasis_final <- eval.basis(time_vec, bsplinebasis_final)
 # now let's figure out the coefficients using regression
 chat <- (solve((t(evalsplinebasis_final))%*%evalsplinebasis_final))%*%(t(evalsplinebasis_final))%*%melanoma$incidence
 
+# Doing by hand
+t(chat)%*%t(evalsplinebasis_final)
+
+str(chat)
+str(t(evalsplinebasis_final))
+
+plot(time_vec, t(chat)%*%t(evalsplinebasis_final), type = "l")
+
 
 # now, we can create the functional object again
 melFD = fd(chat, bsplinebasis_final,
            list("Year","", "Incidence"))
-
+plot(melFD)
 
 # plotting functional observation with original data
 plotfit.fd(melanoma$incidence, melanoma$year, melFD, 

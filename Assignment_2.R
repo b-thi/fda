@@ -15,6 +15,7 @@ Gene <- read.table("https://raw.githubusercontent.com/caojiguo/FDAworkshop/maste
 # Looking at data
 head(Gene)
 unique(Gene$gene)
+str(Gene)
 table(Gene$gene)
 # =============================================
 
@@ -33,63 +34,27 @@ matplot(t(gene.10[,2:11]), type ="l", xlab = "Time point", ylab = "Gene expressi
 
 #### (Preprocessing)
 
-## First, let's create the functional observations using a roughness penalty
+## First, let's create the functional observations
+
 # creating bspline basis
 bsplinebasis_a2 <- create.bspline.basis(rangeval = c(1, 10),
                                         norder = 4, 
                                         nbasis = 5)
 
-# Choosing Smoothing Parameters using cross-validation
-lambda_val = seq(0, 1, 0.01)
-len_lam = length(lambda_val)
-gcv_val = c()
-
-# Running loop
-for (i in 1:len_lam) {
-  
-  # Particular value of lambda
-  lambda = lambda_val[i]
-  
-  # Setting up
-  fdParobj = fdPar(bsplinebasis_a2, 2, lambda)
-  
-  # Creating FD Object
-  smoothlist = smooth.basis(timepts, as.matrix(t(gene.10[,2:11])),
-                            fdParobj)
-  
-  # Pulling out error
-  gcv_val[i] = sum(smoothlist$gcv)
-  
-}
-
-# Plotting results
-data.frame(lambdas = lambda_val, gcv = gcv_val) %>% 
-  ggplot(aes(x = lambdas, y = gcv)) + 
-  geom_line() +
-  theme_bw() +
-  xlab("Lambda") +
-  ylab("Cross Validation Error") +
-  ggtitle("Finding Appropriate Lambda") +
-  geom_point(aes(x = lambdas[which.min(gcv)], 
-                 y = gcv[which.min(gcv)]), 
-             color = "red",
-             size = 3) +
-  theme(plot.title = element_text(hjust = 0.5))
-
 # Making functional observations
-# Creating best FD Object
-gene_fda_rough = smooth.basisPar(timepts,
-                                    as.matrix(t(gene.10[,2:11])), 
-                                    bsplinebasis_a2, 
-                                    lambda = lambda_val[which.min(gcv_val)])
+gene_fda = smooth.basis(timepts,
+                        as.matrix(t(gene.10[,2:11])), 
+                        bsplinebasis_a2)
 
 # Plotting 
-plot(tempfd$fd,xlab='day',ylab='temperature',cex.lab=1.5,cex.axis=1.5)
+plot(gene_fda$fd, 
+     xlab='Time Point', 
+     ylab='Gene Expression')
 
 ##### (a) - Doing the fPCA
 
 # Running fPCA
-gene_pca = pca.fd(gene_fda_rough$fd, nharm = 4)
+gene_pca = pca.fd(gene_fda$fd, nharm = 4)
 
 # Plotting
 plot(gene_pca$values)
@@ -106,5 +71,8 @@ legend(0,-0.07,c('PC1','PC2','PC3','PC4'),col=1:4,lty=1,lwd=5)
 title('Gene Principle Component Functions')
 
 ### (b)
+
+
+
 
 

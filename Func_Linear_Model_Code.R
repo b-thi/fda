@@ -13,10 +13,7 @@ n = length(y)
 timepts = bike$timepts
 norder = 4 
 nbasis = norder+length(timepts)-2; 
-spline_basis = create.bspline.basis(rangeval=c(1,24), nbasis, norder, timepts)
-timepts = timepts + rnorm(24, mean = 0, sd = 0.1)
-timepts[1] = 1
-timepts[24] = 24
+spline_basis = create.bspline.basis(rangeval = c(1,24), nbasis = nbasis, 4, timepts)
 bike_fd = Data2fd(timepts, t(bike$temp), spline_basis)
 
 ### Making list
@@ -24,14 +21,12 @@ bike_list = vector("list",2)
 bike_list[[1]] = rep(1, 102)
 bike_list[[2]] = bike_fd
 
-### create a constant basis for the intercept
-conbasis   = create.constant.basis(c(1,24))
+### Creating a constant basis for the intercept
+conbasis= create.constant.basis(c(1,24))
 
 ### Creating basis for beta
 timepts = bike$timepts
-norder = 4 
-nbasis = norder + length(timepts) - 2; 
-spline_basis2 = create.bspline.basis(rangeval=c(1,24), nbasis, norder, timepts)
+spline_basis2 = create.bspline.basis(rangeval=c(1,24), 5, 4)
 
 ### List for coefficients
 bike_beta_list  = vector("list",2)
@@ -41,20 +36,12 @@ bike_beta_list[[2]] = spline_basis2
 ### Fitting the model
 lm_fda_bike = fRegress(y, bike_list, bike_beta_list)
 
-bike_list
+bike_beta = lm_fda_bike$betaestlist[[2]]$fd
+
+plot(bike_beta, xlab = "Time", ylab = "Average Bike Rentals")
 
 
-# fit the functional linear model 
-fRegressList1 = fRegress(annualprec,templist,betalist1)
-names(fRegressList1)
-betaestlist1  = fRegressList1$betaestlist
-length(betaestlist1)
-# betaestlist1 has two elements. The first element is the intercept
-# The second element is the slope beta(t)
 
-# obtain beta(t)
-tempbetafd1   = betaestlist1[[2]]$fd
-
-quartz()
-par(mfrow=c(1,1),mar = c(8, 8, 4, 2))
-plot(tempbetafd1, xlab="Day", ylab="Beta for temperature")
+### Getting predictons
+bike_pred = lm_fda_bike$yhatfdobj
+plot(bike_pred, y)

@@ -59,4 +59,13 @@ plot(bike_beta, xlab = "Time", ylab = "Average Bike Rentals")
 
 ### Getting predictons
 bike_pred = lm_fda_bike$yhatfdobj
-plot(bike_pred, y)
+
+### Plotting predictions
+data.frame(bike_pred = bike_pred, y = y) %>% 
+  ggplot(aes(x = bike_pred, y = y)) +
+  geom_point() +
+  theme_bw() +
+  xlab("Bike Predictions (yhat)") + 
+  ylab("Actual Values (y)") +
+  ggtitle("Fitted vs. Actual") + 
+  theme(plot.title = element_text(hjust = 0.5))
