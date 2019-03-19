@@ -11,6 +11,9 @@ library(fda.usc)
 
 # Loading data
 load(file = "bike.RData")
+bike$temp
+
+bike$y
 
 # Hourly temperature for 102 Saturdays
 temp = t(bike$temp )
